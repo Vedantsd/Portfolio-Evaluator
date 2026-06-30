@@ -8,62 +8,71 @@ end = d.date()
 start = d.date() - datetime.timedelta(365)
 
 
-stock_name = "BAJAJHCARE.NS"
+def predict_stock(stock_data) : 
 
-data = yf.download(stock_name, start, end)
-df = pd.DataFrame(data)
+    predicted_values = {}
 
-df.columns = df.columns.get_level_values(0)
+    for sname in stock_data.keys() : 
+        
+        stock_name = stock_data[sname]
 
-df['MVA10'] = df['Close'].rolling(window = 10).mean()
-df['MVA20'] = df['Close'].rolling(window = 20).mean()
-df['MVA50'] = df['Close'].rolling(window = 50).mean()
+        data = yf.download(stock_name, start, end)
+        df = pd.DataFrame(data)
 
-df['Return'] = df['Close'].pct_change(fill_method=None)
+        df.columns = df.columns.get_level_values(0)
 
-df['Volatility'] = df['Return'].rolling(window = 10).std()
+        df['MVA10'] = df['Close'].rolling(window = 10).mean()
+        df['MVA20'] = df['Close'].rolling(window = 20).mean()
+        df['MVA50'] = df['Close'].rolling(window = 50).mean()
 
-delta = df['Close'].diff()
+        df['Return'] = df['Close'].pct_change(fill_method=None)
 
-gain = delta.where(delta > 0, 0).rolling(14).mean()
-loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
+        df['Volatility'] = df['Return'].rolling(window = 10).std()
 
-rs = gain / loss
-df['RSI'] = 100 - (100 / (1 + rs))
+        delta = df['Close'].diff()
 
-ema12 = df['Close'].ewm(span=12).mean()
-ema26 = df['Close'].ewm(span=26).mean()
+        gain = delta.where(delta > 0, 0).rolling(14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
 
-df['MACD'] = ema12 - ema26
+        rs = gain / loss
+        df['RSI'] = 100 - (100 / (1 + rs))
 
-df['Volume_MA20'] = df['Volume'].rolling(20).mean()
-df['Volume_Ratio'] = df['Volume'] / df['Volume_MA20']
+        ema12 = df['Close'].ewm(span=12).mean()
+        ema26 = df['Close'].ewm(span=26).mean()
+
+        df['MACD'] = ema12 - ema26
+
+        df['Volume_MA20'] = df['Volume'].rolling(20).mean()
+        df['Volume_Ratio'] = df['Volume'] / df['Volume_MA20']
 
 
-df['Future_Return'] = df['Close'].shift(-1) / df['Close'] - 1
-df['Target'] = (df['Future_Return'] > 0.02).astype(int)
+        df['Future_Return'] = df['Close'].shift(-1) / df['Close'] - 1
+        df['Target'] = (df['Future_Return'] > 0.02).astype(int)
 
-df = df.dropna()
+        df = df.dropna()
 
-features = ['Open', 'High', 'Low', 'Close', 'Volume', 'MVA10', 'MVA20', 'MVA50', 'Return', 'Volatility', 'RSI', 'MACD', 'Volume_Ratio']
+        features = ['Open', 'High', 'Low', 'Close', 'Volume', 'MVA10', 'MVA20', 'MVA50', 'Return', 'Volatility', 'RSI', 'MACD', 'Volume_Ratio']
 
-X = df[features]
-y = df['Target']
-split = int(len(df) * 0.8)
+        X = df[features]
+        y = df['Target']
+        split = int(len(df) * 0.8)
 
-X_train = X[:split]
-X_test = X[split:]
+        X_train = X[:split]
+        X_test = X[split:]
 
-y_train = y[:split]
-y_test = y[split:]
+        y_train = y[:split]
+        y_test = y[split:]
 
-model = XGBClassifier(n_estimators=300, learning_rate=0.5, max_depth=4, subsample=0.8, colsample_bytree=0.8, random_state=42)
-model.fit(X_train, y_train)
+        model = XGBClassifier(n_estimators=300, learning_rate=0.5, max_depth=4, subsample=0.8, colsample_bytree=0.8, random_state=42)
+        model.fit(X_train, y_train)
 
-latest = X.iloc[[-1]]
+        latest = X.iloc[[-1]]
 
-buy_probability = model.predict_proba(latest)[0, 1]
-signal = 2 * buy_probability - 1
+        buy_probability = model.predict_proba(latest)[0, 1]
+        signal = 2 * buy_probability - 1
 
-print(f"{buy_probability:.2%}")
-print(f"{signal:.3f}")
+        predicted_values[sname] = [buy_probability, signal]
+        # print(f"{buy_probability:.2%}")
+        # print(f"{signal:.3f}")
+
+    return predicted_values
