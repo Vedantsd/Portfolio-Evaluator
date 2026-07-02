@@ -5,8 +5,6 @@ from xgboost import XGBClassifier
 
 d = datetime.datetime.now()
 end = d.date()
-start = d.date() - datetime.timedelta(365)
-
 
 def predict_stock(stock_data) : 
 
@@ -14,7 +12,9 @@ def predict_stock(stock_data) :
 
     for sname in stock_data.keys() : 
         
-        stock_name = stock_data[sname]
+        stock_detais = stock_data[sname]
+        stock_name = stock_detais[0]
+        start = stock_detais[1]
 
         data = yf.download(stock_name, start, end)
         df = pd.DataFrame(data)

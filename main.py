@@ -3,14 +3,15 @@ import csv
 
 stock_data = {}
 
-with open("temp/stock_data.csv", 'r') as file: 
+with open("stock_data.csv", 'r') as file: 
     reader = csv.DictReader(file)
     for row in reader : 
-        stock_data[row['Stock Name']] = row['Ticker Symbol']
+        stock_data[row['STOCK NAME']] = [row['SYMBOL'], row['LISTING DATE']]
 
 
 stock_list = {}
-for _ in range(5) : 
+k = int(input("Enter the number of stocks you want to predict: "))
+for _ in range(k) : 
     sname = input("Enter a stock name: ").upper()
 
     if sname in stock_data.keys() : 
