@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename=('css/results-style.css')) }}">
+    <title>Evaluation Results</title>
+
+</head>
+<body>
+<div class="container">
+    <h1>Evaluation Results</h1>
+    <a class="back-link" href="/">&larr; Back to stock list</a>
+
+    {% if results %}
+    <table>
+        <thead>
+
+            <tr>
+                <th>Stock</th>
+                <th>Buy Probability</th>
+                <th>Signal Score</th>
+                <th>Recommendation</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for name, values in results.items() %}
+            {% set buy_probability = values[0] %}
+            {% set signal = values[1] %}
+
+            <tr>
+                <td>{{ name }}</td>
+                <td>{{ "%.2f"|format(buy_probability * 100) }}%</td>
+                <td>{{ "%.3f"|format(signal) }}</td>
+                <td>
+                    {% if signal > 0.2 %}
+                    <span class="signal-buy">BUY</span>
+
+                    {% elif signal < -0.2 %}
+                    <span class="signal-sell">SELL</span>
+
+                    {% else %}
+                    <span class="signal-hold">HOLD</span>
+
+                    {% endif %}
+                </td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
+    {% elif not errors %}
+    <div class="empty">No stocks were selected. Go back and pick at least one.</div>
+    {% endif %}
+
+    {% if errors %}
+
+
+    <div class="empty" style="margin-top:20px; text-align:left; color:#b91c1c;">
+        <strong>Some stocks couldn't be evaluated:</strong>
+        <ul style="margin-top:10px; margin-left:20px;">
+            {% for name, msg in errors.items() %}
+            <li style="margin-bottom:6px;"><strong>{{ name }}</strong>: {{ msg }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% endif %}
+
+</div>
+</body>
+</html>
